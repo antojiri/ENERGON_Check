@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Checklist PIT</title>
     <style>
-<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 .mail-item {
     padding: 5px;
     margin: 5px 0;
@@ -349,10 +348,12 @@
         <input type="text" id="badgeInput" readonly>
         <button id="openScannerBtn" class="scan-button">Abrir cámara</button>
     </div>
-    <div id="interactive" class="viewport"></div>
+    <video id="video" style="display:none"></video>
+    <canvas id="canvas" style="display:none"></canvas>
     <div id="errorMessage"></div>
     <div class="admin-button" onclick="showAdminPrompt()">⚙️</div>
-</div>    <!-- Página de administrador -->
+</div>
+<!-- Página de administrador -->
 <div id="adminPage" class="page">
     <h2>Modo Administrador</h2>
     
@@ -524,6 +525,10 @@
     </div>
 </div>    
 <script>
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    console.error("getUserMedia no es soportado en este navegador");
+    showError("La funcionalidad de cámara no está soportada en este navegador");
+}
         // Almacenamiento local de badges válidos
         if (!localStorage.getItem('validBadges')) {
             localStorage.setItem('validBadges', JSON.stringify([]));
@@ -901,63 +906,42 @@ function removeMail(mail) {
         updateMailList();
     }
 }
-document.getElementById('openScannerBtn').addEventListener('click', initScanner);
-
-function initScanner() {
-    document.getElementById('interactive').style.display = 'block';
+document.getElementById('openScannerBtn').addEventListener('click', function() {
+    const video = document.getElementById('video');
     
-    Quagga.init({
-        inputStream: {
-            name: "Live",
-            type: "LiveStream",
-            target: document.querySelector("#interactive"),
-            constraints: {
-                facingMode: "environment"
-            },
-        },
-        decoder: {
-            readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
-        }
-    }, function(err) {
-        if (err) {
-            showError("Error al iniciar el escáner. Por favor, inténtelo de nuevo.");
-            return;
-        }
-        Quagga.start();
+    // Acceder a la cámara
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(function(stream) {
+            video.srcObject = stream;
+            video.style.display = 'block';
+            video.play();
+        })
+        .catch(function(err) {
+            showError('Error al acceder a la cámara: ' + err.messagsage);
+        });
+});
+
+// Función para detener la cámara
+function stopCamera() {
+    const video = document.getElementById('video');
+    const stream = video.srcObject;
+    const tracks = stream.getTracks();
+    
+    tracks.forEach(function(track) {
+        track.stop();
     });
-
-    Quagga.onDetected(function(result) {
-        if (result && result.codeResult) {
-            let code = result.codeResult.code;
-            document.getElementById('badgeInput').value = code;
-            stopScanner();
-            validateBadge(code);
-        }
-    });
-
-    Quagga.onProcessed(function(result) {
-        let drawingCtx = Quagga.canvas.ctx.overlay,
-            drawingCanvas = Quagga.canvas.dom.overlay;
-
-        if (result) {
-            if (result.boxes) {
-                drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
-                result.boxes.filter(function(box) {
-                    return box !== result.box;
-                }).forEach(function(box) {
-                    Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 2 });
-                });
-            }
-
-            if (result.box) {
-                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
-            }
-
-            if (result.codeResult && result.codeResult.code) {
-                Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, { color: 'red', lineWidth: 3 });
-            }
-        }
-    });
+    
+    video.style.display = 'none';
+}function checkCameraAvailability() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            console.log("Cámara disponible");
+            stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(function(err) {
+            console.error("Error de cámara:", err);
+            showError("No se pudo acceder a la cámara: " + err.name + " - " + err.message);
+        });
 }
 
 function stopScanner() {
@@ -976,4 +960,3 @@ function showError(message) {
     </script>
 </body>
 </html>
-
