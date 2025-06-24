@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checklist PIT</title>
+    <style>
+.mail-item {
+    padding: 5px;
+    margin: 5px 0;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mail-item button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.mail-item button:hover {
+    background-color: #c82333;
+}
+.admin-section {
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.responses-list {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.response-item {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    text-align: left;
+}
+
+.back-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.input-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+#badgeInput {
+    padding: 10px;
+    width: 200px;
+    border: 2px solid #007bff;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 16px;
+}
+.modal-message {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.error-message {
+    color: #ff0000;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+    padding: 10px;
+    background-color: rgba(255, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.success-text {
+    color: #28a745;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+    padding: 10px;
+    background-color: rgba(40, 167, 69, 0.1);
+    border-radius: 5px;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.read-button {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    margin: 20px auto 0;
+    font-size: 16px;
+}
+        .page {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .active {
+            display: block;
+        }
+        #scanMessage {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 50px 0;
+        }
+        .admin-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px;
+            opacity: 0.2;
+        }
+        .list-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .badge-item {
+            padding: 5px;
+            margin: 5px 0;
+            border-bottom: 1px solid #ccc;
+        }
+        #errorMessage {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #ffeeee;
+            border: 1px solid #ff0000;
+            border-radius: 5px;
+            margin: 20px auto;
+            max-width: 80%;
+            display: none;
+        }
+        .survey-container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .info-section {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .question {
+            margin-bottom: 20px;
+            text-align: left;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .survey-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .survey-button:hover {
+            background-color: #0056b3;
+        }
+        .survey-section {
+            display: none;
+        }
+        .survey-section.active {
+            display: block;
+        }
+        .number-input {
+            width: 100px;
+            padding: 5px;
+            margin-top: 5px;
+        }
+        .validation-error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .warning-image {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90vh;
+            z-index: 1000;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .error-message {
+            color: #ff0000;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            line-height: 1.5;
+            padding: 10px;
+            background-color: rgba(255, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+.success-message {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    z-index: 1000;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.success-text {
+    color: #28a745;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+    line-height: 1.5;
+    padding: 10px;
+    background-color: rgba(40, 167, 69, 0.1);
+    border-radius: 5px;
+}
+
+.read-button {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    margin: 20px auto 0;
+    font-size: 16px;
+}
+    </style>
+</head>
+<body>
+    <!-- Página de escaneo -->
+<div id="scanPage" class="page active">
+    <div id="scanMessage">ESCANEA EL BADGE</div>
+    <div class="input-container">
+        <input type="text" id="badgeInput" autofocus>
+    </div>
+    <div id="errorMessage"></div>
+    <div class="admin-button" onclick="showAdminPrompt()">⚙️</div>
+</div>
+    <!-- Página de administrador -->
+<div id="adminPage" class="page">
+    <h2>Modo Administrador</h2>
+    
+    <!-- Sección de gestión de badges -->
+    <div class="admin-section">
+        <h3>Gestión de Badges</h3>
+        <input type="text" id="newBadge" placeholder="Añadir nuevo badge ID">
+        <button onclick="addBadge()">Añadir</button>
+        <div class="list-container" id="badgeList"></div>
+    </div>
+    <!—Correos de difusión-->
+    <div class="admin-section">
+        <h3>Correos de difusión</h3>
+        <input type="text" id="newMail" placeholder="Añadir nuevo correo">
+        <button onclick="addMail()">Añadir</button>
+        <div class="list-container" id="mailList"></div>
+    </div>
+
+
+    <!-- Sección de respuestas -->
+    <div class="admin-section">
+        <h3>Respuestas Guardadas</h3>
+        <button onclick="exportResponses()">Exportar Respuestas a CSV</button>
+        <div id="responsesList" class="responses-list"></div>
+    </div>
+
+    <button onclick="showPage('scanPage')" class="back-button">Volver</button>
+</div>
+    <!-- Página de encuesta -->
+    <div id="surveyPage" class="page">
+        <div class="survey-container">
+            <!-- Información automática -->
+            <div class="info-section">
+                <p>Badge ID: <span id="badgeDisplay"></span></p>
+                <p>Fecha: <span id="dateDisplay"></span></p>
+                <p>Hora: <span id="timeDisplay"></span></p>
+            </div>
+
+            <!-- Sección 1 -->
+            <div id="section1" class="survey-section active">
+                <!-- Turno -->
+                <div class="question">
+                    <label>Turno:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="turno" value="AM" required>
+                            AM
+                        </label>
+                        <label>
+                            <input type="radio" name="turno" value="PM">
+                            PM
+                        </label>
+                        <label>
+                            <input type="radio" name="turno" value="NS">
+                            NS
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Modelo de PIT -->
+                <div class="question">
+                    <label>Modelo de PIT:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="modeloPIT" value="CROWN" required>
+                            CROWN (blanca)
+                        </label>
+                        <label>
+                            <input type="radio" name="modeloPIT" value="JUNGHEINRICH">
+                            JUNGHEINRICH (amarilla)
+                        </label>
+                    </div>
+                </div>
+
+                <button type="button" class="survey-button" onclick="nextSection(1)">Siguiente</button>
+            </div>
+
+            <!-- Sección 2 -->
+            <div id="section2" class="survey-section">
+                <div class="question">
+                    <label>Clip de batería asegurado y sin daños visibles en los cables:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="clipBateria" value="Si">Sí</label>
+                        <label><input type="radio" name="clipBateria" value="No">No</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <label>¿Hay signos de fugas en el equipo o debajo de este?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="fugas" value="Si">Sí</label>
+                        <label><input type="radio" name="fugas" value="No">No</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <label>¿Hay daños visibles en las horquillas y en los rodillos?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="danos" value="Si">Sí</label>
+                        <label><input type="radio" name="danos" value="No">No</label>
+                    </div>
+                </div>
+
+                <button type="button" class="survey-button" onclick="previousSection(2)">Anterior</button>
+                <button type="button" class="survey-button" onclick="nextSection(2)">Siguiente</button>
+            </div>
+
+            <!-- Sección 3 -->
+            <div id="section3" class="survey-section">
+                <div class="question">
+                    <label>Todas las etiquetas y pegatinas son legibles:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="etiquetas" value="Si">Sí</label>
+                        <label><input type="radio" name="etiquetas" value="No">No</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <label>Batería correctamente cargada:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="bateria" value="Si">Sí</label>
+                        <label><input type="radio" name="bateria" value="No">No</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <label>Controles y dispositivos de seguridad responden correctamente:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="controles" value="Si">Sí</label>
+                        <label><input type="radio" name="controles" value="No">No</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <label>Lectura contador de horas:</label>
+                    <input type="number" id="contadorHoras" class="number-input" min="0" max="1200">
+                    <div id="contadorError" class="validation-error">El valor debe estar entre 0 y 1200</div>
+                </div>
+
+                <button type="button" class="survey-button" onclick="previousSection(3)">Anterior</button>
+                <button type="button" class="survey-button" onclick="submitSurvey()">Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Contenedor de advertencia Red Tag -->
+<div id="warningContainer" class="modal-message">
+    <div class="modal-content">
+        <button class="close-button" onclick="closeWarning()">X</button>
+        <div class="error-message">
+            EL EQUIPO NO ESTÁ EN CONDICIONES DE USO;<br>
+            DELIMITE LA ZONA, SIGA EL PROTOCOLO RED TAG<br>
+            Y AVISE A UN RESPONSABLE DE LA INCIDENCIA.
+        </div>
+    </div>
+</div>
+
+<!-- Contenedor del mensaje de éxito -->
+<div id="successContainer" class="modal-message">
+    <div class="modal-content">
+        <button class="close-button" onclick="closeSuccess()">X</button>
+        <div class="success-text">
+            Todas las irregularidades observadas deben ser notificadas a su superior.<br><br>
+            ¡No inicies ninguna operación si el equipo está defectuoso!<br>
+            En tal caso, se debe inmovilizar el equipo y colocarlo en la RED TAG AREA.<br><br>
+            Si se han cumplido las mil horas de trabajo, el equipo necesita una revisión por mantenimiento, comunícaselo a tu superior.
+        </div>
+        <button class="read-button" onclick="handleSuccessRead()">Leído</button>
+    </div>
+</div>    
+<script>
+        // Almacenamiento local de badges válidos
+        if (!localStorage.getItem('validBadges')) {
+            localStorage.setItem('validBadges', JSON.stringify([]));
+        }
+        // Almacenamiento local de respuestas
+        if (!localStorage.getItem('surveyResponses')) {
+            localStorage.setItem('surveyResponses', JSON.stringify([]));
+        }
+
+        const adminPassword = '1234'; // Cambiar por una contraseña segura
+
+        // Listener para el input del scanner
+        document.getElementById('badgeInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                validateBadge(this.value);
+                this.value = ''; // Limpiar después de validar
+            }
+        });
+
+        function validateBadge(badgeId) {
+            const validBadges = JSON.parse(localStorage.getItem('validBadges'));
+            const errorMessageElement = document.getElementById('errorMessage');
+            
+            if (validBadges.includes(badgeId)) {
+                errorMessageElement.style.display = 'none';
+                showPage('surveyPage');
+                document.getElementById('badgeDisplay').textContent = badgeId;
+                updateDateTime();
+                resetSurvey();
+            } else {
+                errorMessageElement.textContent = `Error: El badge ${badgeId} no está autorizado.`;
+                errorMessageElement.style.display = 'block';
+                
+                setTimeout(() => {
+                    errorMessageElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('dateDisplay').textContent = now.toLocaleDateString();
+            document.getElementById('timeDisplay').textContent = now.toLocaleTimeString();
+        }
+
+function showAdminPrompt() {
+    const password = prompt('Introduce la contraseña de administrador:');
+    if (password === adminPassword) {
+        showPage('adminPage');
+        updateBadgeList();
+        updateMailList(); // Añadir esta línea
+        showResponses();
+    }
+}
+        function addBadge() {
+            const newBadge = document.getElementById('newBadge').value;
+            if (newBadge) {
+                const validBadges = JSON.parse(localStorage.getItem('validBadges'));
+                if (!validBadges.includes(newBadge)) {
+                    validBadges.push(newBadge);
+                    localStorage.setItem('validBadges', JSON.stringify(validBadges));
+                    updateBadgeList();
+                }
+                document.getElementById('newBadge').value = '';
+            }
+        }
+
+        function updateBadgeList() {
+            const validBadges = JSON.parse(localStorage.getItem('validBadges'));
+            const listContainer = document.getElementById('badgeList');
+            listContainer.innerHTML = '';
+            validBadges.forEach(badge => {
+                const div = document.createElement('div');
+                div.className = 'badge-item';
+                div.innerHTML = `
+                    ${badge} 
+                    <button onclick="removeBadge('${badge}')">Eliminar</button>
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+        function removeBadge(badge) {
+            const validBadges = JSON.parse(localStorage.getItem('validBadges'));
+            const index = validBadges.indexOf(badge);
+            if (index > -1) {
+                validBadges.splice(index, 1);
+                localStorage.setItem('validBadges', JSON.stringify(validBadges));
+                updateBadgeList();
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            if (pageId === 'scanPage') {
+                document.getElementById('badgeInput').focus();
+            }
+        }
+
+        function nextSection(currentSection) {
+            // Validar sección actual
+            if (!validateSection(currentSection)) {
+                return;
+            }
+
+            // Ocultar sección actual y mostrar siguiente
+            document.getElementById(`section${currentSection}`).classList.remove('active');
+            document.getElementById(`section${currentSection + 1}`).classList.add('active');
+        }
+
+        function previousSection(currentSection) {
+            document.getElementById(`section${currentSection}`).classList.remove('active');
+            document.getElementById(`section${currentSection - 1}`).classList.add('active');
+        }
+
+        function validateSection(section) {
+            switch(section) {
+                case 1:
+                    if (!document.querySelector('input[name="turno"]:checked') ||
+                        !document.querySelector('input[name="modeloPIT"]:checked')) {
+                        alert('Por favor, completa todos los campos');
+                        return false;
+                    }
+                    break;
+                case 2:
+                    if (!document.querySelector('input[name="clipBateria"]:checked') ||
+                        !document.querySelector('input[name="fugas"]:checked') ||
+                        !document.querySelector('input[name="danos"]:checked')) {
+                        alert('Por favor, completa todos los campos');
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        function submitSurvey() {
+            // Validar última sección
+            if (!document.querySelector('input[name="etiquetas"]:checked') ||
+                !document.querySelector('input[name="bateria"]:checked') ||
+                !document.querySelector('input[name="controles"]:checked')) {
+                alert('Por favor, completa todos los campos');
+                return;
+            }
+
+            const horas = document.getElementById('contadorHoras').value;
+            if (horas === '' || horas < 0 || horas > 1200) {
+                document.getElementById('contadorError').style.display = 'block';
+                return;
+            }
+
+            // Verificar condiciones de advertencia
+            if (checkWarningConditions()) {
+                const shouldProceed = confirm('Se han detectado problemas con la PIT. ¿Deseas continuar?');
+                if (!shouldProceed) {
+                    return;
+                }
+            }
+
+            // Recopilar todas las respuestas
+            const surveyData = {
+                badgeId: document.getElementById('badgeDisplay').textContent,
+                fecha: document.getElementById('dateDisplay').textContent,
+                hora: document.getElementById('timeDisplay').textContent,
+                turno: document.querySelector('input[name="turno"]:checked').value,
+                modeloPIT: document.querySelector('input[name="modeloPIT"]:checked').value,
+                clipBateria: document.querySelector('input[name="clipBateria"]:checked').value,
+                fugas: document.querySelector('input[name="fugas"]:checked').value,
+                danos: document.querySelector('input[name="danos"]:checked').value,
+                etiquetas: document.querySelector('input[name="etiquetas"]:checked').value,
+                bateria: document.querySelector('input[name="bateria"]:checked').value,
+                controles: document.querySelector('input[name="controles"]:checked').value,
+                contadorHoras: horas
+            };
+
+            // Guardar respuestas
+            const responses = JSON.parse(localStorage.getItem('surveyResponses'));
+            responses.push(surveyData);
+            localStorage.setItem('surveyResponses', JSON.stringify(responses));
+
+                        // Mostrar mensaje de éxito
+            showSuccess();        }
+
+        function resetSurvey() {
+            // Resetear todas las selecciones
+            document.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.checked = false;
+            });
+            document.getElementById('contadorHoras').value = '';
+            document.getElementById('contadorError').style.display = 'none';
+
+            // Mostrar primera sección
+            document.querySelectorAll('.survey-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('section1').classList.add('active');
+        }
+
+        function showWarning() {
+            document.getElementById('warningContainer').style.display = 'block';
+        }
+
+        function closeWarning() {
+            document.getElementById('warningContainer').style.display = 'none';
+        }
+
+        function checkWarningConditions() {
+            const clipBateria = document.querySelector('input[name="clipBateria"]:checked')?.value;
+            const fugas = document.querySelector('input[name="fugas"]:checked')?.value;
+            const danos = document.querySelector('input[name="danos"]:checked')?.value;
+            const etiquetas = document.querySelector('input[name="etiquetas"]:checked')?.value;
+            const bateria = document.querySelector('input[name="bateria"]:checked')?.value;
+            const controles = document.querySelector('input[name="controles"]:checked')?.value;
+            const horas = document.getElementById('contadorHoras').value;
+
+            if (clipBateria === 'No' || 
+                fugas === 'Si' || 
+                danos === 'Si' || 
+                etiquetas === 'No' || 
+                bateria === 'No' || 
+                controles === 'No' || 
+                (horas !== '' && parseInt(horas) > 1000)) {
+                showWarning();
+                return true;
+            }
+            return false;
+        }
+function showSuccess() {
+    document.getElementById('successContainer').style.display = 'block';
+}
+
+function closeSuccess() {
+    document.getElementById('successContainer').style.display = 'none';
+    showPage('scanPage');
+}
+
+function handleSuccessRead() {
+    closeSuccess();
+}
+// Función para mostrar las respuestas en el panel de administrador
+function showResponses() {
+    const responses = JSON.parse(localStorage.getItem('surveyResponses')) || [];
+    const container = document.getElementById('responsesList');
+    container.innerHTML = responses.length === 0 ? 
+        '<p>No hay respuestas guardadas</p>' : 
+        responses.map((response, index) => `
+            <div class="response-item">
+                <strong>Encuesta ${index + 1}</strong><br>
+                Badge: ${response.badgeId}<br>
+                Fecha: ${response.fecha}<br>
+                Hora: ${response.hora}<br>
+                Turno: ${response.turno}<br>
+                Modelo PIT: ${response.modeloPIT}<br>
+                Clip Batería: ${response.clipBateria}<br>
+                Fugas: ${response.fugas}<br>
+                Daños: ${response.danos}<br>
+                Etiquetas: ${response.etiquetas}<br>
+                Batería: ${response.bateria}<br>
+                Controles: ${response.controles}<br>
+                Contador Horas: ${response.contadorHoras}<br>
+                Estado: ${getResponseStatus(response)}
+            </div>
+        `).join('');
+}
+
+// Función para determinar el estado de la PIT según las respuestas
+function getResponseStatus(response) {
+    if (response.clipBateria === 'No' || 
+        response.fugas === 'Si' || 
+        response.danos === 'Si' || 
+        response.etiquetas === 'No' || 
+        response.bateria === 'No' || 
+        response.controles === 'No' || 
+        parseInt(response.contadorHoras) > 1000) {
+        return '⚠️ Requiere atención';
+    }
+    return '✅ OK';
+}
+
+// Función para exportar las respuestas a CSV
+function exportResponses() {
+    const responses = JSON.parse(localStorage.getItem('surveyResponses')) || [];
+    if (responses.length === 0) {
+        alert('No hay respuestas para exportar');
+        return;
+    }
+
+    let csv = 'Badge ID,Fecha,Hora,Turno,Modelo PIT,Clip Batería,Fugas,Daños,Etiquetas,Batería,Controles,Contador Horas\n';
+    
+    responses.forEach(response => {
+        csv += `${response.badgeId},${response.fecha},${response.hora},${response.turno},${response.modeloPIT},` +
+               `${response.clipBateria},${response.fugas},${response.danos},${response.etiquetas},` +
+               `${response.bateria},${response.controles},${response.contadorHoras}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'checklist_pit_respuestas.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+// Inicialización del almacenamiento de correos
+if (!localStorage.getItem('mailList')) {
+    localStorage.setItem('mailList', JSON.stringify([]));
+}
+
+// Función para añadir correo
+function addMail() {
+    const newMail = document.getElementById('newMail').value;
+    if (validateEmail(newMail)) {
+        const mails = JSON.parse(localStorage.getItem('mailList')) || [];
+        if (!mails.includes(newMail)) {
+            mails.push(newMail);
+            localStorage.setItem('mailList', JSON.stringify(mails));
+            updateMailList();
+            document.getElementById('newMail').value = '';
+        } else {
+            alert('Este correo ya está en la lista');
+        }
+    } else {
+        alert('Por favor, introduce un correo válido');
+    }
+}
+
+// Función para validar formato de correo
+function validateEmail(email) {
+    return /^[^\s@]+@[^\s@\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Función para actualizar lista de correos
+function updateMailList() {
+    const mails = JSON.parse(localStorage.getItem('mailList')) || [];
+    const listContainer = document.getElementById('mailList');
+    listContainer.innerHTML = '';
+    mails.forEach(mail => {
+        const div = document.createElement('div');
+        div.className = 'mail-item';
+        div.innerHTML = `
+            <span>${mail}</span>
+            <button onclick="removeMail('${mail}')">Eliminar</button>
+        `;
+        listContainer.appendChild(div);
+    });
+}
+// Función para añadir correo
+function addMail() {
+    const newMail = document.getElementById('newMail').value;
+    if (validateEmail(newMail)) {
+        const mails = JSON.parse(localStorage.getItem('mailList')) || [];
+        if (!mails.includes(newMail)) {
+            mails.push(newMail);
+            localStorage.setItem('mailList', JSON.stringify(mails));
+            updateMailList();
+            document.getElementById('newMail').value = '';
+        } else {
+            alert('Este correo ya está en la lista');
+        }
+    } else {
+        alert('Por favor, introduce un correo válido');
+    }
+}
+
+// Función para eliminar correo
+function removeMail(mail) {
+    const mails = JSON.parse(localStorage.getItem('mailList')) || [];
+    const index = mails.indexOf(mail);
+    if (index > -1) {
+        mails.splice(index, 1);
+        localStorage.setItem('mailList', JSON.stringify(mails));
+        updateMailList();
+    }
+}
+    </script>
+</body>
+</html>
+
+
