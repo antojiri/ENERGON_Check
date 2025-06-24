@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Checklist PIT</title>
     <style>
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 .mail-item {
     padding: 5px;
     margin: 5px 0;
@@ -310,19 +311,48 @@
     margin: 20px auto 0;
     font-size: 16px;
 }
+.viewport {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    height: 480px;
+    margin: 0 auto;
+    display: none;
+}
+
+.scan-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+}
+
+#interactive.viewport > video {
+    max-width: 100%;
+    width: 100%;
+}
+
+#interactive.viewport > canvas {
+    max-width: 100%;
+    width: 100%;
+}
     </style>
 </head>
 <body>
-    <!-- Página de escaneo -->
+<!-- Página de escaneo -->
 <div id="scanPage" class="page active">
     <div id="scanMessage">ESCANEA EL BADGE</div>
     <div class="input-container">
-        <input type="text" id="badgeInput" autofocus>
+        <input type="text" id="badgeInput" readonly>
+        <button id="openScannerBtn" class="scan-button">Abrir cámara</button>
     </div>
+    <div id="interactive" class="viewport"></div>
     <div id="errorMessage"></div>
     <div class="admin-button" onclick="showAdminPrompt()">⚙️</div>
-</div>
-    <!-- Página de administrador -->
+</div>    <!-- Página de administrador -->
 <div id="adminPage" class="page">
     <h2>Modo Administrador</h2>
     
@@ -514,25 +544,24 @@
         });
 
         function validateBadge(badgeId) {
-            const validBadges = JSON.parse(localStorage.getItem('validBadges'));
-            const errorMessageElement = document.getElementById('errorMessage');
-            
-            if (validBadges.includes(badgeId)) {
-                errorMessageElement.style.display = 'none';
-                showPage('surveyPage');
-                document.getElementById('badgeDisplay').textContent = badgeId;
-                updateDateTime();
-                resetSurvey();
-            } else {
-                errorMessageElement.textContent = `Error: El badge ${badgeId} no está autorizado.`;
-                errorMessageElement.style.display = 'block';
-                
-                setTimeout(() => {
-                    errorMessageElement.style.display = 'none';
-                }, 3000);
-            }
-        }
-
+    const validBadges = JSON.parse(localStorage.getItem('validBadges'));
+    const errorMessageElement = document.getElementById('errorMessage');
+    
+    if (!badgeId) {
+        showError("Error al leer el código. Inténtelo de nuevo.");
+        return;
+    }
+    
+    if (validBadges.includes(badgeId)) {
+        errorMessageElement.style.display = 'none';
+        showPage('surveyPage');
+        document.getElementById('badgeDisplay').textContent = badgeId;
+        updateDateTime();
+        resetSurvey();
+    } else {
+        showError(`Error: El badge ${badgeId} no está autorizado.`);
+    }
+}
         function updateDateTime() {
             const now = new Date();
             document.getElementById('dateDisplay').textContent = now.toLocaleDateString();
@@ -872,8 +901,79 @@ function removeMail(mail) {
         updateMailList();
     }
 }
+document.getElementById('openScannerBtn').addEventListener('click', initScanner);
+
+function initScanner() {
+    document.getElementById('interactive').style.display = 'block';
+    
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector("#interactive"),
+            constraints: {
+                facingMode: "environment"
+            },
+        },
+        decoder: {
+            readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
+        }
+    }, function(err) {
+        if (err) {
+            showError("Error al iniciar el escáner. Por favor, inténtelo de nuevo.");
+            return;
+        }
+        Quagga.start();
+    });
+
+    Quagga.onDetected(function(result) {
+        if (result && result.codeResult) {
+            let code = result.codeResult.code;
+            document.getElementById('badgeInput').value = code;
+            stopScanner();
+            validateBadge(code);
+        }
+    });
+
+    Quagga.onProcessed(function(result) {
+        let drawingCtx = Quagga.canvas.ctx.overlay,
+            drawingCanvas = Quagga.canvas.dom.overlay;
+
+        if (result) {
+            if (result.boxes) {
+                drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                result.boxes.filter(function(box) {
+                    return box !== result.box;
+                }).forEach(function(box) {
+                    Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 2 });
+                });
+            }
+
+            if (result.box) {
+                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
+            }
+
+            if (result.codeResult && result.codeResult.code) {
+                Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, { color: 'red', lineWidth: 3 });
+            }
+        }
+    });
+}
+
+function stopScanner() {
+    Quagga.stop();
+    document.getElementById('interactive').style.display = 'none';
+}
+
+function showError(message) {
+    const errorElement = document.getElementById('errorMessage');
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+    setTimeout(() => {
+        errorElement.style.display = 'none';
+    }, 3000);
+}
     </script>
 </body>
 </html>
-
 
