@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Checklist PIT</title>
     <style>
-.mail-item {
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.min.js"></script>
+
+    .mail-item {
     padding: 5px;
     margin: 5px 0;
     border-bottom: 1px solid #ccc;
@@ -338,8 +340,41 @@
     max-width: 100%;
     width: 100%;
 }
+.scan-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+}
+#video{
+    width: 5cm;
+    height: 2cm;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    margin: 10px auto;
+    display: block;
+}
+.video-container{
+    display: flex;
+    justify-content:center;
+    align-items.center,
+    margin:20px 0;
+}
+.video-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
     </style>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
+
+
+
 <body>
 <!-- Página de escaneo -->
 <div id="scanPage" class="page active">
@@ -348,7 +383,9 @@
         <input type="text" id="badgeInput" readonly>
         <button id="openScannerBtn" class="scan-button">Abrir cámara</button>
     </div>
+    <div class="video-container">
     <video id="video" style="display:none"></video>
+    </div>
     <canvas id="canvas" style="display:none"></canvas>
     <div id="errorMessage"></div>
     <div class="admin-button" onclick="showAdminPrompt()">⚙️</div>
@@ -908,31 +945,50 @@ function removeMail(mail) {
 }
 document.getElementById('openScannerBtn').addEventListener('click', function() {
     const video = document.getElementById('video');
+    const codeReader = new ZXing.BrowserMultiFormatReader();
     
-    // Acceder a la cámara
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(function(stream) {
-            video.srcObject = stream;
-            video.style.display = 'block';
-            video.play();
+    // Establecer las restricciones del video
+    const constraints = {
+        video: {
+            width: { ideal: 1280 }, // Resolución alta para mejor lectura
+            height: { ideal: 720 },
+            facingMode: "environment" // Usar cámara trasera si está disponible
+        }
+    };
+    
+    codeReader.listVideoInputDevices()
+        .then((videoInputDevices) => {
+            video.style.display = 'block'; // Mostrar el video
+            
+            codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
+                if (result) {
+                    console.log("Código encontrado:", result.text);
+                    document.getElementById('badgeInput').value = result.text;
+                    codeReader.reset();
+                    video.style.display = 'none';
+                    validateBadge(result.text);
+                }
+                if (err && !(err instanceof ZXing.NotFoundException)) {
+                    console.error(err);
+                    showError('Error al leer el código');
+                }
+            }, constraints); // Pasar las restricciones aquí
         })
-        .catch(function(err) {
-            showError('Error al acceder a la cámara: ' + err.messagsage);
+        .catch((err) => {
+            showError('Error al acceder a la cámara: ' + err);
         });
 });
+
+
 
 // Función para detener la cámara
 function stopCamera() {
     const video = document.getElementById('video');
-    const stream = video.srcObject;
-    const tracks = stream.getTracks();
-    
-    tracks.forEach(function(track) {
-        track.stop();
-    });
-    
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    codeReader.reset();
     video.style.display = 'none';
-}function checkCameraAvailability() {
+}
+function checkCameraAvailability() {
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(function(stream) {
             console.log("Cámara disponible");
@@ -957,6 +1013,20 @@ function showError(message) {
         errorElement.style.display = 'none';
     }, 3000);
 }
+function stopCamera() {
+    const video = document.getElementById('video');
+    if (video.srcObject) {
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
+        
+        tracks.forEach(function(track) {
+            track.stop();
+        });
+        
+        video.style.display = 'none';
+    }
+}
+
     </script>
 </body>
 </html>
